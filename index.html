@@ -138,7 +138,7 @@
             border-bottom: 6px solid var(--brand-green);
         }
 
-        /* Logo Container: Added semi-transparent white background for visibility */
+        /* Logo Container: Changed to semi-transparent black with no shadow for a flat blend */
         .graphic-logo-container {
             position: absolute;
             top: 30px; 
@@ -150,17 +150,15 @@
             align-items: center;
             justify-content: center;
             padding: 8px 16px; 
-            background-color: rgba(255, 255, 255, 0.85); /* Blended White Background */
+            background-color: rgba(0, 0, 0, 0.6); /* Blended Black Background */
             border-radius: 4px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Subtle shadow so the box stands out */
         }
 
-        /* Logo Image: Reset to 100% opacity */
         .graphic-logo-img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            opacity: 1; 
+            opacity: 1; /* Logo kept at full opacity */
         }
 
         .graphic-image {
