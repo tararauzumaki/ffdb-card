@@ -138,17 +138,22 @@
             border-bottom: 6px solid var(--brand-green);
         }
 
-        /* Logo Container */
+        /* Reduced Logo Size and Enhanced Visibility */
         .graphic-logo-container {
             position: absolute;
-            top: 40px;
-            left: 40px;
-            max-width: 250px;
-            max-height: 100px;
+            top: 30px; /* Adjusted position */
+            left: 30px; /* Adjusted position */
+            max-width: 150px; /* **Shrunk size** */
+            max-height: 60px; /* **Shrunk size** */
             z-index: 5;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 8px; /* Extra breathing space */
+            background-color: rgba(0, 0, 0, 0.4); /* **Enhanced visibility background layer** */
+            border-radius: 4px;
+            /* Extra visual pop and contrast drop shadow */
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.9));
         }
 
         .graphic-logo-img {
@@ -161,7 +166,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            object-position: center;
+            object-position: center; /* **Updated dynamically for sliding** */
         }
 
         .graphic-credit {
@@ -189,7 +194,7 @@
         }
 
         .graphic-titles {
-            max-width: 65%; 
+            max-width: 70%; /* **Adjusted title overlap space** */
             display: flex;
             flex-direction: column;
             gap: 5px;
@@ -225,9 +230,9 @@
             right: 60px;
             background-color: #64748b; 
             color: white;
-            padding: 12px 24px;
+            padding: 8px 16px; /* **Shrunk padding** */
             font-family: 'Inter', sans-serif;
-            font-size: 24px;
+            font-size: 20px; /* **Shrunk text size** */
             font-weight: 800;
             text-transform: uppercase;
             border-radius: 4px;
@@ -271,6 +276,15 @@
         <div class="input-group">
             <label>Upload Species Photo</label>
             <input type="file" id="inpImage" accept="image/png, image/jpeg, image/webp">
+        </div>
+
+        <div class="input-group">
+            <label>Image X-Axis Position (%)</label>
+            <input type="range" id="inpImageX" min="-100" max="100" value="0" step="1">
+        </div>
+        <div class="input-group">
+            <label>Image Y-Axis Position (%)</label>
+            <input type="range" id="inpImageY" min="-100" max="100" value="0" step="1">
         </div>
 
         <div class="input-group">
@@ -343,6 +357,10 @@
     <script>
         // DOM Elements
         const inpImage = document.getElementById('inpImage');
+        // **Position Sliders**
+        const inpImageX = document.getElementById('inpImageX');
+        const inpImageY = document.getElementById('inpImageY');
+
         const inpCredit = document.getElementById('inpCredit');
         const inpBengali = document.getElementById('inpBengali');
         const inpEnglish = document.getElementById('inpEnglish');
@@ -365,11 +383,19 @@
             outStatus.style.backgroundColor = selectedOption.getAttribute('data-color');
         }
 
+        // **Function to update image sliding position**
+        function updateImagePosition() {
+            outImage.style.objectPosition = `${inpImageX.value}% ${inpImageY.value}%`;
+        }
+
         // --- HARD RESET FUNCTION ---
-        // Forces inputs and preview to reset completely on page reload
         function resetToDefault() {
             // 1. Reset input values
             inpImage.value = "";
+            // **Reset sliders**
+            inpImageX.value = "0";
+            inpImageY.value = "0";
+
             inpCredit.value = "Forest Department";
             inpBengali.value = "বেঙ্গল টাইগার";
             inpEnglish.value = "Bengal Tiger";
@@ -377,6 +403,8 @@
             inpStatus.selectedIndex = 0; // Index 0 is "Not Evaluated"
 
             // 2. Reset preview text & images
+            // **Reset image position**
+            updateImagePosition();
             outImage.src = "https://images.unsplash.com/photo-1595596700582-7a0e5b7fb582?q=80&w=1080&auto=format&fit=crop";
             outCredit.textContent = "Forest Department";
             outCredit.parentElement.style.display = "block";
@@ -390,6 +418,10 @@
 
         // Run reset immediately on load
         window.addEventListener('load', resetToDefault);
+
+        // **Listeners for Position Sliders**
+        inpImageX.addEventListener('input', updateImagePosition);
+        inpImageY.addEventListener('input', updateImagePosition);
 
         // Live Text Updating
         inpCredit.addEventListener('input', (e) => {
@@ -409,6 +441,8 @@
             if (file) {
                 const objectUrl = URL.createObjectURL(file);
                 outImage.src = objectUrl;
+                // Keep the default sliding behavior when a new image is uploaded
+                updateImagePosition();
             }
         });
 
@@ -420,7 +454,7 @@
 
             setTimeout(() => {
                 html2canvas(captureTarget, {
-                    scale: 2, 
+                    scale: 2, // 2160x2160px output
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#052e16',
