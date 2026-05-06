@@ -126,6 +126,7 @@
             transform-origin: center center;
             transform: scale(0.65);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.1s ease; /* Smooth toggle */
         }
 
         /* --- GRAPHIC TEMPLATE DESIGN --- */
@@ -138,20 +139,17 @@
             border-bottom: 6px solid var(--brand-green);
         }
 
-        /* Logo Container: Removed the box, added a smooth radial blend */
         .graphic-logo-container {
             position: absolute;
             top: 20px; 
             left: 20px; 
-            max-width: 200px; /* Given a bit more room for the fade */
+            max-width: 200px; 
             max-height: 100px; 
             z-index: 5;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px; /* Padding creates space for the gradient to fade smoothly */
-            
-            /* The 30% opacity black blend fading into transparent */
+            padding: 20px; 
             background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0) 70%);
         }
 
@@ -160,7 +158,6 @@
             max-height: 100%;
             object-fit: contain;
             opacity: 1; 
-            /* Subtle drop shadow makes the logo text/shapes stand out clearly */
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
         }
 
@@ -195,11 +192,13 @@
             background-color: #052e16;
         }
 
+        /* Updated padding and gap for titles */
         .graphic-titles {
-            max-width: 70%; 
+            max-width: 75%; /* Slightly wider to prevent awkward wrapping */
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 12px; /* Increased gap for better spacing */
+            padding: 15px 0; /* Added padding to top and bottom */
         }
 
         .graphic-bengali {
@@ -208,7 +207,7 @@
             font-weight: 700;
             line-height: 1.1;
             color: #ffffff;
-            margin-bottom: 5px;
+            margin-bottom: 2px; /* Let the gap handle most spacing */
         }
 
         .graphic-english {
@@ -438,14 +437,24 @@
             btnExport.textContent = 'Generating...';
             btnExport.disabled = true;
 
+            // PREPARE FOR HIGH-RES EXPORT: 
+            // Remove the CSS scale transform so html2canvas captures the full 1080x1080 DOM dimensions
+            const originalTransform = captureTarget.style.transform;
+            captureTarget.style.transform = 'none';
+
             setTimeout(() => {
                 html2canvas(captureTarget, {
-                    scale: 2, 
+                    scale: 2, // 2x scale output = 2160x2160 pixels
+                    width: 1080,
+                    height: 1080,
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#052e16',
                     logging: false
                 }).then(canvas => {
+                    // Restore original scaling for preview UI
+                    captureTarget.style.transform = originalTransform;
+
                     const image = canvas.toDataURL("image/png");
                     const link = document.createElement('a');
                     link.download = `FFDB-${inpEnglish.value.replace(/\s+/g, '-').toLowerCase()}-graphic.png`;
@@ -455,12 +464,14 @@
                     btnExport.textContent = originalText;
                     btnExport.disabled = false;
                 }).catch(err => {
+                    // Always restore original scaling on error
+                    captureTarget.style.transform = originalTransform;
                     console.error("Error generating graphic:", err);
-                    alert("There was an error generating the image.");
+                    alert("There was an error generating the image. Please try again.");
                     btnExport.textContent = originalText;
                     btnExport.disabled = false;
                 });
-            }, 300); 
+            }, 300); // Brief timeout ensures DOM has updated before capture
         });
     </script>
 </body>
