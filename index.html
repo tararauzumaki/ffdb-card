@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFDB Social Graphics Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --brand-green: #10b981;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-gold: #fbbf24;
+            --bottom-bar-bg: #e6f3e7; 
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- CONTROL PANEL (LEFT) --- */
+        .controls {
+            width: 400px;
+            min-width: 400px;
+            background-color: var(--panel-bg);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            overflow-y: auto;
+            border-right: 2px solid #334155;
+            z-index: 10;
+        }
+
+        .controls h2 {
+            font-weight: 800;
+            color: var(--brand-green);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--bg-dark);
+            border: 2px solid #334155;
+            color: var(--text-light);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            border-radius: 4px;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--brand-green);
+        }
+
+        .btn-export {
+            background-color: var(--brand-green);
+            color: #000;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            transition: background-color 0.2s;
+        }
+
+        .btn-export:hover {
+            background-color: #0ea5e9;
+        }
+
+        /* --- PREVIEW AREA (RIGHT) --- */
+        .preview-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #0b1121;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        /* Canvas strictly 1080x1080 for high-res export */
+        .export-canvas {
+            width: 1080px;
+            height: 1080px;
+            min-width: 1080px;
+            min-height: 1080px;
+            background-color: #052e16; 
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            transform-origin: center center;
+            transform: scale(0.65);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- GRAPHIC TEMPLATE DESIGN --- */
+        .graphic-image-wrapper {
+            width: 100%;
+            height: 60%;
+            background-color: #1e293b;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 6px solid var(--brand-green);
+        }
+
+        /* Logo Container */
+        .graphic-logo-container {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            max-width: 250px;
+            max-height: 100px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .graphic-logo-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .graphic-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .graphic-credit {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            background-color: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 8px 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            border-radius: 4px;
+            z-index: 5;
+        }
+
+        .graphic-content {
+            height: 35%;
+            padding: 40px 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            background-color: #052e16;
+        }
+
+        .graphic-titles {
+            max-width: 65%; 
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .graphic-bengali {
+            font-family: 'Noto Serif Bengali', serif;
+            font-size: 75px; 
+            font-weight: 700;
+            line-height: 1.1;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+
+        .graphic-english {
+            font-family: 'Noto Serif', serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .graphic-scientific {
+            font-family: 'Noto Serif', serif;
+            font-size: 30px;
+            font-weight: 600;
+            font-style: italic;
+            color: var(--accent-gold);
+        }
+
+        .graphic-status {
+            position: absolute;
+            top: 60px;
+            right: 60px;
+            background-color: #64748b; 
+            color: white;
+            padding: 12px 24px;
+            font-family: 'Inter', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            text-transform: uppercase;
+            border-radius: 4px;
+            white-space: nowrap; 
+        }
+
+        /* Light Bottom Banner */
+        .graphic-bottom-bar {
+            height: 5%;
+            background-color: var(--bottom-bar-bg);
+            color: #052e16; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 1200px) {
+            .export-canvas { transform: scale(0.5); }
+        }
+        @media (max-width: 992px) {
+            body { flex-direction: column; height: auto; overflow-y: auto; }
+            .controls { width: 100%; min-width: 100%; border-right: none; border-bottom: 2px solid #334155; }
+            .preview-container { min-height: 600px; overflow: hidden; padding: 1rem; align-items: flex-start; }
+            .export-canvas { transform-origin: top center; transform: scale(0.35); margin-top: 1rem; }
+        }
+        @media (max-width: 480px) {
+            .export-canvas { transform: scale(0.28); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <h2>FFDB Generator</h2>
+        
+        <div class="input-group">
+            <label>Upload Species Photo</label>
+            <input type="file" id="inpImage" accept="image/png, image/jpeg, image/webp">
+        </div>
+
+        <div class="input-group">
+            <label>Image Credit / Photographer</label>
+            <input type="text" id="inpCredit" placeholder="e.g., John Doe / GBIF">
+        </div>
+
+        <div class="input-group">
+            <label>Bengali Name</label>
+            <input type="text" id="inpBengali" placeholder="e.g., বেঙ্গল টাইগার">
+        </div>
+
+        <div class="input-group">
+            <label>English Name</label>
+            <input type="text" id="inpEnglish" placeholder="e.g., Bengal Tiger">
+        </div>
+
+        <div class="input-group">
+            <label>Scientific Name</label>
+            <input type="text" id="inpScientific" placeholder="e.g., Panthera tigris">
+        </div>
+
+        <div class="input-group">
+            <label>Conservation Status</label>
+            <select id="inpStatus">
+                <option value="Not Evaluated (NE)" data-color="#64748b">Not Evaluated (NE)</option>
+                <option value="Data Deficient (DD)" data-color="#64748b">Data Deficient (DD)</option>
+                <option value="Least Concern (LC)" data-color="#10b981">Least Concern (LC)</option>
+                <option value="Near Threatened (NT)" data-color="#eab308">Near Threatened (NT)</option>
+                <option value="Vulnerable (VU)" data-color="#f59e0b">Vulnerable (VU)</option>
+                <option value="Endangered (EN)" data-color="#dc2626">Endangered (EN)</option>
+                <option value="Critically Endangered (CR)" data-color="#991b1b">Critically Endangered (CR)</option>
+            </select>
+        </div>
+
+        <button class="btn-export" id="btnExport">Download High-Res Graphic</button>
+    </div>
+
+    <div class="preview-container">
+        <div class="export-canvas" id="captureTarget">
+            
+            <div class="graphic-image-wrapper">
+                
+                <div class="graphic-logo-container">
+                    <img id="outLogo" class="graphic-logo-img" src="./logo.png" alt="FFDB Logo">
+                </div>
+
+                <img id="outImage" class="graphic-image" src="" alt="Species">
+                
+                <div class="graphic-credit">Photo: <span id="outCredit"></span></div>
+            </div>
+
+            <div class="graphic-content">
+                <div class="graphic-titles">
+                    <div id="outBengali" class="graphic-bengali"></div>
+                    <div id="outEnglish" class="graphic-english"></div>
+                    <div id="outScientific" class="graphic-scientific"></div>
+                </div>
+                
+                <div id="outStatus" class="graphic-status"></div>
+            </div>
+
+            <div class="graphic-bottom-bar">
+                Flora & Fauna Database of Bangladesh (FFDB) | www.ffdb.bd
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const inpImage = document.getElementById('inpImage');
+        const inpCredit = document.getElementById('inpCredit');
+        const inpBengali = document.getElementById('inpBengali');
+        const inpEnglish = document.getElementById('inpEnglish');
+        const inpScientific = document.getElementById('inpScientific');
+        const inpStatus = document.getElementById('inpStatus');
+        const btnExport = document.getElementById('btnExport');
+
+        const outImage = document.getElementById('outImage');
+        const outCredit = document.getElementById('outCredit');
+        const outBengali = document.getElementById('outBengali');
+        const outEnglish = document.getElementById('outEnglish');
+        const outScientific = document.getElementById('outScientific');
+        const outStatus = document.getElementById('outStatus');
+        const captureTarget = document.getElementById('captureTarget');
+
+        // Function to update status badge color
+        function updateStatus() {
+            const selectedOption = inpStatus.options[inpStatus.selectedIndex];
+            outStatus.textContent = selectedOption.value;
+            outStatus.style.backgroundColor = selectedOption.getAttribute('data-color');
+        }
+
+        // --- HARD RESET FUNCTION ---
+        // Forces inputs and preview to reset completely on page reload
+        function resetToDefault() {
+            // 1. Reset input values
+            inpImage.value = "";
+            inpCredit.value = "Forest Department";
+            inpBengali.value = "বেঙ্গল টাইগার";
+            inpEnglish.value = "Bengal Tiger";
+            inpScientific.value = "Panthera tigris tigris";
+            inpStatus.selectedIndex = 0; // Index 0 is "Not Evaluated"
+
+            // 2. Reset preview text & images
+            outImage.src = "https://images.unsplash.com/photo-1595596700582-7a0e5b7fb582?q=80&w=1080&auto=format&fit=crop";
+            outCredit.textContent = "Forest Department";
+            outCredit.parentElement.style.display = "block";
+            outBengali.textContent = "বেঙ্গল টাইগার";
+            outEnglish.textContent = "Bengal Tiger";
+            outScientific.textContent = "Panthera tigris tigris";
+            
+            // 3. Reset badge
+            updateStatus();
+        }
+
+        // Run reset immediately on load
+        window.addEventListener('load', resetToDefault);
+
+        // Live Text Updating
+        inpCredit.addEventListener('input', (e) => {
+            outCredit.textContent = e.target.value;
+            outCredit.parentElement.style.display = e.target.value.trim() === '' ? 'none' : 'block';
+        });
+        inpBengali.addEventListener('input', (e) => outBengali.textContent = e.target.value);
+        inpEnglish.addEventListener('input', (e) => outEnglish.textContent = e.target.value);
+        inpScientific.addEventListener('input', (e) => outScientific.textContent = e.target.value);
+        
+        // Update Status Color on change
+        inpStatus.addEventListener('change', updateStatus);
+
+        // Handle Local Image Upload
+        inpImage.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const objectUrl = URL.createObjectURL(file);
+                outImage.src = objectUrl;
+            }
+        });
+
+        // Export Function
+        btnExport.addEventListener('click', () => {
+            const originalText = btnExport.textContent;
+            btnExport.textContent = 'Generating...';
+            btnExport.disabled = true;
+
+            setTimeout(() => {
+                html2canvas(captureTarget, {
+                    scale: 2, 
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#052e16',
+                    logging: false
+                }).then(canvas => {
+                    const image = canvas.toDataURL("image/png");
+                    const link = document.createElement('a');
+                    link.download = `FFDB-${inpEnglish.value.replace(/\s+/g, '-').toLowerCase()}-graphic.png`;
+                    link.href = image;
+                    link.click();
+
+                    btnExport.textContent = originalText;
+                    btnExport.disabled = false;
+                }).catch(err => {
+                    console.error("Error generating graphic:", err);
+                    alert("There was an error generating the image.");
+                    btnExport.textContent = originalText;
+                    btnExport.disabled = false;
+                });
+            }, 300);
+        });
+    </script>
+</body>
+</html>
