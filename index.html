@@ -6,7 +6,7 @@
     <title>FFDB Social Graphics Generator</title>
     <!-- html2canvas library for rendering the DOM to an image -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- Google Fonts: Noto Serif for Graphic, Inter for UI -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -183,7 +183,6 @@
 
         .graphic-content {
             height: 35%;
-            /* Increased left padding from 60px to 90px for more visual breathing room */
             padding: 40px 60px 40px 90px;
             display: flex;
             flex-direction: column;
@@ -332,13 +331,12 @@
             
             <div class="graphic-image-wrapper">
                 
-                <!-- HARDCODED LOGO -->
-                <!-- Change src="./logo.png" to point to your actual local logo file -->
+                <!-- Added crossorigin anonymous to prevent taint from local server setups -->
                 <div class="graphic-logo-container">
-                    <img id="outLogo" class="graphic-logo-img" src="./logo.png" alt="FFDB Logo">
+                    <img id="outLogo" crossorigin="anonymous" class="graphic-logo-img" src="./logo.png" alt="FFDB Logo">
                 </div>
 
-                <img id="outImage" class="graphic-image" src="" alt="Species">
+                <img id="outImage" crossorigin="anonymous" class="graphic-image" src="" alt="Species">
                 
                 <div class="graphic-credit">Photo: <span id="outCredit"></span></div>
             </div>
@@ -428,16 +426,21 @@
         
         inpStatus.addEventListener('change', updateStatus);
 
+        // --- BUG FIX: Use FileReader to convert image to Base64 instead of Blob URL ---
         inpImage.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                const objectUrl = URL.createObjectURL(file);
-                outImage.src = objectUrl;
-                updateImagePosition();
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    // This creates a raw Base64 string that html2canvas will never "lose"
+                    outImage.src = event.target.result;
+                    updateImagePosition();
+                }
+                reader.readAsDataURL(file);
             }
         });
 
-        // FIXED HIGH-RES MOBILE EXPORT
+        // Export execution
         btnExport.addEventListener('click', () => {
             const originalText = btnExport.textContent;
             btnExport.textContent = 'Generating...';
@@ -448,7 +451,7 @@
                     scale: 2, // Forces a 2160x2160 output
                     width: 1080, 
                     height: 1080,
-                    windowWidth: 1080, // Crucial for mobile viewports
+                    windowWidth: 1080, 
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#052e16',
