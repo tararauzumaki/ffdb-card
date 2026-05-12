@@ -160,11 +160,13 @@
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
         }
 
+        /* FIX: Changed from img styles to background image styles */
         .graphic-image {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            object-position: center; 
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
         }
 
         .graphic-credit {
@@ -281,11 +283,11 @@
         <!-- Featured Image Position Sliders -->
         <div class="input-group">
             <label>Image X-Axis Position (%)</label>
-            <input type="range" id="inpImageX" min="-100" max="100" value="0" step="1">
+            <input type="range" id="inpImageX" min="0" max="100" value="50" step="1">
         </div>
         <div class="input-group">
             <label>Image Y-Axis Position (%)</label>
-            <input type="range" id="inpImageY" min="-100" max="100" value="0" step="1">
+            <input type="range" id="inpImageY" min="0" max="100" value="50" step="1">
         </div>
 
         <div class="input-group">
@@ -331,12 +333,12 @@
             
             <div class="graphic-image-wrapper">
                 
-                <!-- Added crossorigin anonymous to prevent taint from local server setups -->
                 <div class="graphic-logo-container">
                     <img id="outLogo" crossorigin="anonymous" class="graphic-logo-img" src="./logo.png" alt="FFDB Logo">
                 </div>
 
-                <img id="outImage" crossorigin="anonymous" class="graphic-image" src="" alt="Species">
+                <!-- FIX: Changed from <img> to <div> to use CSS background -->
+                <div id="outImage" class="graphic-image"></div>
                 
                 <div class="graphic-credit">Photo: <span id="outCredit"></span></div>
             </div>
@@ -385,14 +387,15 @@
             outStatus.style.backgroundColor = selectedOption.getAttribute('data-color');
         }
 
+        // FIX: Update background-position instead of object-position
         function updateImagePosition() {
-            outImage.style.objectPosition = `${inpImageX.value}% ${inpImageY.value}%`;
+            outImage.style.backgroundPosition = `${inpImageX.value}% ${inpImageY.value}%`;
         }
 
         function resetToDefault() {
             inpImage.value = "";
-            inpImageX.value = "0";
-            inpImageY.value = "0";
+            inpImageX.value = "50";
+            inpImageY.value = "50";
 
             inpCredit.value = "Forest Department";
             inpBengali.value = "বেঙ্গল টাইগার";
@@ -401,7 +404,10 @@
             inpStatus.selectedIndex = 0;
 
             updateImagePosition();
-            outImage.src = "https://images.unsplash.com/photo-1595596700582-7a0e5b7fb582?q=80&w=1080&auto=format&fit=crop";
+            
+            // FIX: Set placeholder image via background-image property
+            outImage.style.backgroundImage = `url('https://images.unsplash.com/photo-1595596700582-7a0e5b7fb582?q=80&w=1080&auto=format&fit=crop')`;
+            
             outCredit.textContent = "Forest Department";
             outCredit.parentElement.style.display = "block";
             outBengali.textContent = "বেঙ্গল টাইগার";
@@ -426,21 +432,19 @@
         
         inpStatus.addEventListener('change', updateStatus);
 
-        // --- BUG FIX: Use FileReader to convert image to Base64 instead of Blob URL ---
         inpImage.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    // This creates a raw Base64 string that html2canvas will never "lose"
-                    outImage.src = event.target.result;
+                    // FIX: Apply uploaded image to background-image
+                    outImage.style.backgroundImage = `url('${event.target.result}')`;
                     updateImagePosition();
                 }
                 reader.readAsDataURL(file);
             }
         });
 
-        // Export execution
         btnExport.addEventListener('click', () => {
             const originalText = btnExport.textContent;
             btnExport.textContent = 'Generating...';
