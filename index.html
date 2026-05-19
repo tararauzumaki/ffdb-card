@@ -388,7 +388,7 @@
 
         <div class="action-buttons">
             <button class="btn btn-export" id="btnExport">Download High-Res Graphic</button>
-            <button class="btn btn-template" id="btnCopyTemplate">📋 Copy Facebook Post Text</button>
+            <button class="btn btn-template" id="btnCopyTemplate">Copy Facebook Post Text</button>
         </div>
     </div>
 
@@ -625,11 +625,11 @@ ${inpDescription.value}
 
 Explore the full profile and map on FFDB: ${BASE_API_URL}/species/${currentId}
 
-#BiodiversityBD #FloraAndFaunaBD #FFDB #NatureBangladesh${categoryTag ? ' #' + categoryTag : ''}`;
+#FloraAndFaunaDatabaseOfBangladesh #BiodiversityBD #FloraAndFaunaBD #FFDB #Bangladesh #NatureBangladesh${categoryTag ? ' #' + categoryTag : ''}`;
 
             navigator.clipboard.writeText(postText).then(() => {
                 const originalBtnText = btnCopyTemplate.textContent;
-                btnCopyTemplate.textContent = "✅ Text Copied!";
+                btnCopyTemplate.textContent = "Text Copied!";
                 btnCopyTemplate.style.backgroundColor = "#047857";
                 setTimeout(() => {
                     btnCopyTemplate.textContent = originalBtnText;
