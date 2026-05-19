@@ -315,7 +315,6 @@
     <div class="controls">
         <h2>FFDB Generator</h2>
         
-        <!-- NEW FEATURE: Direct URL Input Fetching System -->
         <div class="input-group">
             <label>Load from FFDB Species URL</label>
             <div class="fetch-wrapper">
@@ -472,20 +471,37 @@
                 const response = await fetch(`${BASE_API_URL}/api/species/${speciesId}`);
                 if (!response.ok) throw new Error("Endpoint returned connection mismatch.");
                 
-                const data = await response.json();
+                const responseJson = await response.json();
                 
-                // Populate Inputs
+                // NEW: Ensure we extract the 'data' object from the API response
+                if (!responseJson.success || !responseJson.data) {
+                    throw new Error("Invalid JSON structure received from API.");
+                }
+                const data = responseJson.data;
+                
+                // NEW: Handle the image array properly to get the primary image
+                let primaryImageUrl = null;
+                let primaryImageCredit = "Forest Department";
+                
+                if (data.images && data.images.length > 0) {
+                    // Try to find the primary image, otherwise just take the first one
+                    const primaryImage = data.images.find(img => img.is_primary) || data.images[0];
+                    primaryImageUrl = primaryImage.image_url;
+                    primaryImageCredit = primaryImage.image_credit || "Forest Department";
+                }
+
+                // Populate Inputs matching the exact JSON keys
                 inpBengali.value = data.bengali_name || "";
                 inpEnglish.value = data.english_name || "";
                 inpScientific.value = data.scientific_name || "";
                 inpHabitat.value = data.habitat || "Bangladesh";
                 inpDescription.value = data.description || "";
-                inpSubcategory.value = data.subcategory || data.category || "";
-                inpCredit.value = data.image_credit || "FFDB Database Source";
+                inpSubcategory.value = data.category || ""; 
+                inpCredit.value = primaryImageCredit;
 
                 // Handle Image Loading directly
-                if (data.image_url) {
-                    outImage.style.backgroundImage = `url('${data.image_url}')`;
+                if (primaryImageUrl) {
+                    outImage.style.backgroundImage = `url('${primaryImageUrl}')`;
                 } else {
                     outImage.style.backgroundImage = `url('https://images.unsplash.com/photo-1595596700582-7a0e5b7fb582?q=80&w=1080&auto=format&fit=crop')`;
                 }
@@ -545,8 +561,6 @@
                 return;
             }
 
-            // High robustness extraction parsing engine
-            // Matches path configurations like: /species/3, /api/species/3, or plain integers "3"
             const parsingResult = rawUrlInput.match(/\/species\/(\d+)/) || 
                                   rawUrlInput.match(/\/api\/species\/(\d+)/) || 
                                   rawUrlInput.match(/^(\d+)$/);
@@ -558,7 +572,6 @@
             }
         });
 
-        // Optional query search fallback (?id=X)
         window.addEventListener('load', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const fallbackId = urlParams.get('id');
@@ -593,7 +606,12 @@
         // Automated Text Template Generation
         btnCopyTemplate.addEventListener('click', () => {
             const currentId = runtimeSpeciesId || "id_placeholder";
-            const categoryTag = inpSubcategory.value.trim().replace(/\s+/g, '');
+            
+            // Format the category tag gracefully (e.g. 'fauna' to '#Fauna')
+            let categoryTag = inpSubcategory.value.trim();
+            if (categoryTag) {
+                categoryTag = categoryTag.charAt(0).toUpperCase() + categoryTag.slice(1);
+            }
             
             const postText = 
 `${inpBengali.value}
@@ -607,7 +625,7 @@ ${inpDescription.value}
 
 Explore the full profile and map on FFDB: ${BASE_API_URL}/species/${currentId}
 
-#BiodiversityBD #FloraAndFaunaBD #FFDB #NatureBangladesh #${categoryTag}`;
+#BiodiversityBD #FloraAndFaunaBD #FFDB #NatureBangladesh${categoryTag ? ' #' + categoryTag : ''}`;
 
             navigator.clipboard.writeText(postText).then(() => {
                 const originalBtnText = btnCopyTemplate.textContent;
