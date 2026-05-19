@@ -129,6 +129,24 @@
             background-color: #475569;
         }
 
+        .fetch-wrapper {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-fetch {
+            width: auto;
+            padding: 0 1.25rem;
+            background-color: #475569;
+            color: white;
+            font-size: 0.85rem;
+            border: 1px solid #64748b;
+        }
+
+        .btn-fetch:hover {
+            background-color: #64748b;
+        }
+
         /* --- PREVIEW AREA (RIGHT) --- */
         .preview-container {
             flex-grow: 1;
@@ -297,6 +315,16 @@
     <div class="controls">
         <h2>FFDB Generator</h2>
         
+        <!-- NEW FEATURE: Direct URL Input Fetching System -->
+        <div class="input-group">
+            <label>Load from FFDB Species URL</label>
+            <div class="fetch-wrapper">
+                <input type="text" id="inpFetchUrl" placeholder="e.g., https://ffdb.bd/species/3">
+                <button type="button" class="btn btn-fetch" id="btnFetch">Fetch</button>
+            </div>
+        </div>
+        <hr style="border: 0; border-top: 1px solid #334155; margin: 0.5rem 0;">
+
         <div class="input-group">
             <label>Upload/Override Photo</label>
             <input type="file" id="inpImage" accept="image/png, image/jpeg, image/webp">
@@ -397,6 +425,8 @@
         const BASE_API_URL = "https://ffdb.bd";
 
         // DOM Elements
+        const inpFetchUrl = document.getElementById('inpFetchUrl');
+        const btnFetch = document.getElementById('btnFetch');
         const inpImage = document.getElementById('inpImage');
         const inpImageX = document.getElementById('inpImageX');
         const inpImageY = document.getElementById('inpImageY');
@@ -431,26 +461,20 @@
             outImage.style.backgroundPosition = `${inpImageX.value}% ${inpImageY.value}%`;
         }
 
-        // --- AUTOMATED API DATA FETCHING ---
-        async function fetchSpeciesFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const speciesId = urlParams.get('id');
-            
-            if (!speciesId) {
-                // Fallback default setup if no URL ID parameter exists
-                resetToDefaultFields();
-                return;
-            }
-
+        // Centralized Unified Data Fetcher Engine
+        async function loadSpeciesData(speciesId) {
+            if (!speciesId) return;
             runtimeSpeciesId = speciesId;
+            btnFetch.textContent = "Loading...";
+            btnFetch.disabled = true;
 
             try {
                 const response = await fetch(`${BASE_API_URL}/api/species/${speciesId}`);
-                if (!response.ok) throw new Error("Species not found on network file map.");
+                if (!response.ok) throw new Error("Endpoint returned connection mismatch.");
                 
                 const data = await response.json();
                 
-                // Populate interactive input form fields
+                // Populate Inputs
                 inpBengali.value = data.bengali_name || "";
                 inpEnglish.value = data.english_name || "";
                 inpScientific.value = data.scientific_name || "";
@@ -459,20 +483,20 @@
                 inpSubcategory.value = data.subcategory || data.category || "";
                 inpCredit.value = data.image_credit || "FFDB Database Source";
 
-                // Set image path directly from your database record
-                if(data.image_url) {
+                // Handle Image Loading directly
+                if (data.image_url) {
                     outImage.style.backgroundImage = `url('${data.image_url}')`;
                 } else {
                     outImage.style.backgroundImage = `url('https://images.unsplash.com/photo-1595596700582-7a0e5b7fb582?q=80&w=1080&auto=format&fit=crop')`;
                 }
 
-                // Match and map the exact conservation status dropdown option
+                // Sync status dropdown map
                 const matchedOption = Array.from(inpStatus.options).find(opt => opt.getAttribute('data-api') === data.conservation_status || opt.value.includes(data.conservation_status));
                 if (matchedOption) {
                     inpStatus.value = matchedOption.value;
                 }
 
-                // Render matching canvas text fields live
+                // Refresh Canvas Layout elements
                 outBengali.textContent = inpBengali.value;
                 outEnglish.textContent = inpEnglish.value;
                 outScientific.textContent = inpScientific.value;
@@ -482,12 +506,15 @@
                 updateImagePosition();
 
             } catch (err) {
-                console.error("API Fetch Failure:", err);
-                alert("Could not load tracking information from database node. Reverting to default visual profile.");
-                resetToDefaultFields();
+                console.error("API Fetch Fault Matrix:", err);
+                alert("Could not load tracking information from database node. Check connection maps.");
+            } finally {
+                btnFetch.textContent = "Fetch";
+                btnFetch.disabled = false;
             }
         }
 
+        // Form reset baseline
         function resetToDefaultFields() {
             inpImage.value = "";
             inpImageX.value = "50";
@@ -510,10 +537,39 @@
             updateStatus();
         }
 
-        // Run network execution map initialization hook safely
-        window.addEventListener('load', fetchSpeciesFromURL);
+        // --- FETCH SYSTEM EVENT HANDLERS ---
+        btnFetch.addEventListener('click', () => {
+            const rawUrlInput = inpFetchUrl.value.trim();
+            if (!rawUrlInput) {
+                alert("Please paste a valid FFDB application link first.");
+                return;
+            }
 
-        // Interactive User Customization Hooks
+            // High robustness extraction parsing engine
+            // Matches path configurations like: /species/3, /api/species/3, or plain integers "3"
+            const parsingResult = rawUrlInput.match(/\/species\/(\d+)/) || 
+                                  rawUrlInput.match(/\/api\/species\/(\d+)/) || 
+                                  rawUrlInput.match(/^(\d+)$/);
+
+            if (parsingResult && parsingResult[1]) {
+                loadSpeciesData(parsingResult[1]);
+            } else {
+                alert("Could not extract a valid Species ID from the text block. Ensure it contains structural paths like: /species/3");
+            }
+        });
+
+        // Optional query search fallback (?id=X)
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fallbackId = urlParams.get('id');
+            if (fallbackId) {
+                loadSpeciesData(fallbackId);
+            } else {
+                resetToDefaultFields();
+            }
+        });
+
+        // Interactive Live Field Sync Listeners
         inpImageX.addEventListener('input', updateImagePosition);
         inpImageY.addEventListener('input', updateImagePosition);
         inpCredit.addEventListener('input', (e) => outCredit.textContent = e.target.value);
@@ -534,7 +590,7 @@
             }
         });
 
-        // --- AUTOMATED POST TEMPLATE COPIER ---
+        // Automated Text Template Generation
         btnCopyTemplate.addEventListener('click', () => {
             const currentId = runtimeSpeciesId || "id_placeholder";
             const categoryTag = inpSubcategory.value.trim().replace(/\s+/g, '');
@@ -563,11 +619,11 @@ Explore the full profile and map on FFDB: ${BASE_API_URL}/species/${currentId}
                 }, 2000);
             }).catch(err => {
                 console.error("Clipboard operational block:", err);
-                alert("Failed to pass contents directly into clipboard. Please ensure browser permissions are mapped.");
+                alert("Failed to copy post block formatting to your device framework.");
             });
         });
 
-        // Export functionality via html2canvas canvas extraction engine
+        // High resolution Canvas export handling
         btnExport.addEventListener('click', () => {
             const originalText = btnExport.textContent;
             btnExport.textContent = 'Generating...';
@@ -597,8 +653,8 @@ Explore the full profile and map on FFDB: ${BASE_API_URL}/species/${currentId}
                     btnExport.textContent = originalText;
                     btnExport.disabled = false;
                 }).catch(err => {
-                    console.error("Rendering block event tracked:", err);
-                    alert("There was an issue creating your asset file. Double check the network health map.");
+                    console.error("Render processing interrupt:", err);
+                    alert("There was an error generating the clear pixel canvas asset.");
                     btnExport.textContent = originalText;
                     btnExport.disabled = false;
                 });
