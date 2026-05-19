@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FFDB Social Graphics Generator</title>
-    <!-- html2canvas library for rendering the DOM to an image -->
+    <title>FFDB Social Graphics Generator & Automated Poster</title>
+    <!-- html2canvas library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -69,7 +69,7 @@
             text-transform: uppercase;
         }
 
-        .input-group input, .input-group select {
+        .input-group input, .input-group select, .input-group textarea {
             width: 100%;
             padding: 0.75rem;
             background-color: var(--bg-dark);
@@ -81,27 +81,52 @@
             transition: border-color 0.2s;
         }
 
-        .input-group input:focus, .input-group select:focus {
+        .input-group textarea {
+            resize: vertical;
+            height: 80px;
+        }
+
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
             outline: none;
             border-color: var(--brand-green);
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s, color 0.2s;
         }
 
         .btn-export {
             background-color: var(--brand-green);
             color: #000;
-            font-weight: 800;
-            text-transform: uppercase;
-            padding: 1rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            margin-top: 1rem;
-            transition: background-color 0.2s;
         }
 
         .btn-export:hover {
             background-color: #0ea5e9;
+        }
+
+        .btn-template {
+            background-color: #334155;
+            color: var(--text-light);
+            border: 2px solid #475569;
+        }
+
+        .btn-template:hover {
+            background-color: #475569;
         }
 
         /* --- PREVIEW AREA (RIGHT) --- */
@@ -115,7 +140,6 @@
             padding: 2rem;
         }
 
-        /* Canvas strictly 1080x1080 for high-res export */
         .export-canvas {
             width: 1080px;
             height: 1080px;
@@ -160,7 +184,6 @@
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
         }
 
-        /* FIX: Changed from img styles to background image styles */
         .graphic-image {
             width: 100%;
             height: 100%;
@@ -240,7 +263,6 @@
             white-space: nowrap; 
         }
 
-        /* Light Bottom Banner */
         .graphic-bottom-bar {
             height: 5%;
             background-color: var(--bottom-bar-bg);
@@ -276,11 +298,10 @@
         <h2>FFDB Generator</h2>
         
         <div class="input-group">
-            <label>Upload Species Photo</label>
+            <label>Upload/Override Photo</label>
             <input type="file" id="inpImage" accept="image/png, image/jpeg, image/webp">
         </div>
 
-        <!-- Featured Image Position Sliders -->
         <div class="input-group">
             <label>Image X-Axis Position (%)</label>
             <input type="range" id="inpImageX" min="0" max="100" value="50" step="1">
@@ -292,7 +313,7 @@
 
         <div class="input-group">
             <label>Image Credit / Photographer</label>
-            <input type="text" id="inpCredit" placeholder="e.g., John Doe / GBIF">
+            <input type="text" id="inpCredit" placeholder="e.g., Forest Department">
         </div>
 
         <div class="input-group">
@@ -311,35 +332,48 @@
         </div>
 
         <div class="input-group">
+            <label>Habitat (For Post Text)</label>
+            <input type="text" id="inpHabitat" placeholder="e.g., Sundarbans Mangrove Forest">
+        </div>
+
+        <div class="input-group">
+            <label>Subcategory/Group (For Hashtag)</label>
+            <input type="text" id="inpSubcategory" placeholder="e.g., Mammals">
+        </div>
+
+        <div class="input-group">
+            <label>Description (For Post Text)</label>
+            <textarea id="inpDescription" placeholder="1-2 sentences overview..."></textarea>
+        </div>
+
+        <div class="input-group">
             <label>Conservation Status</label>
             <select id="inpStatus">
-                <option value="Not Evaluated (NE)" data-color="#64748b">Not Evaluated (NE)</option>
-                <option value="Data Deficient (DD)" data-color="#64748b">Data Deficient (DD)</option>
-                <option value="Least Concern (LC)" data-color="#10b981">Least Concern (LC)</option>
-                <option value="Near Threatened (NT)" data-color="#eab308">Near Threatened (NT)</option>
-                <option value="Vulnerable (VU)" data-color="#f59e0b">Vulnerable (VU)</option>
-                <option value="Endangered (EN)" data-color="#dc2626">Endangered (EN)</option>
-                <option value="Critically Endangered (CR)" data-color="#991b1b">Critically Endangered (CR)</option>
+                <option value="Not Evaluated (NE)" data-color="#64748b" data-api="NE">Not Evaluated (NE)</option>
+                <option value="Data Deficient (DD)" data-color="#64748b" data-api="DD">Data Deficient (DD)</option>
+                <option value="Least Concern (LC)" data-color="#10b981" data-api="LC">Least Concern (LC)</option>
+                <option value="Near Threatened (NT)" data-color="#eab308" data-api="NT">Near Threatened (NT)</option>
+                <option value="Vulnerable (VU)" data-color="#f59e0b" data-api="VU">Vulnerable (VU)</option>
+                <option value="Endangered (EN)" data-color="#dc2626" data-api="EN">Endangered (EN)</option>
+                <option value="Critically Endangered (CR)" data-color="#991b1b" data-api="CR">Critically Endangered (CR)</option>
             </select>
         </div>
 
-        <button class="btn-export" id="btnExport">Download High-Res Graphic</button>
+        <div class="action-buttons">
+            <button class="btn btn-export" id="btnExport">Download High-Res Graphic</button>
+            <button class="btn btn-template" id="btnCopyTemplate">📋 Copy Facebook Post Text</button>
+        </div>
     </div>
 
     <!-- Preview Area -->
     <div class="preview-container">
-        <!-- The 1080x1080 node -->
         <div class="export-canvas" id="captureTarget">
             
             <div class="graphic-image-wrapper">
-                
                 <div class="graphic-logo-container">
                     <img id="outLogo" crossorigin="anonymous" class="graphic-logo-img" src="./logo.png" alt="FFDB Logo">
                 </div>
-
-                <!-- FIX: Changed from <img> to <div> to use CSS background -->
                 <div id="outImage" class="graphic-image"></div>
-                
                 <div class="graphic-credit">Photo: <span id="outCredit"></span></div>
             </div>
 
@@ -349,7 +383,6 @@
                     <div id="outEnglish" class="graphic-english"></div>
                     <div id="outScientific" class="graphic-scientific"></div>
                 </div>
-                
                 <div id="outStatus" class="graphic-status"></div>
             </div>
 
@@ -361,17 +394,22 @@
     </div>
 
     <script>
+        const BASE_API_URL = "https://ffdb.bd";
+
         // DOM Elements
         const inpImage = document.getElementById('inpImage');
         const inpImageX = document.getElementById('inpImageX');
         const inpImageY = document.getElementById('inpImageY');
-
         const inpCredit = document.getElementById('inpCredit');
         const inpBengali = document.getElementById('inpBengali');
         const inpEnglish = document.getElementById('inpEnglish');
         const inpScientific = document.getElementById('inpScientific');
+        const inpHabitat = document.getElementById('inpHabitat');
+        const inpSubcategory = document.getElementById('inpSubcategory');
+        const inpDescription = document.getElementById('inpDescription');
         const inpStatus = document.getElementById('inpStatus');
         const btnExport = document.getElementById('btnExport');
+        const btnCopyTemplate = document.getElementById('btnCopyTemplate');
 
         const outImage = document.getElementById('outImage');
         const outCredit = document.getElementById('outCredit');
@@ -381,55 +419,107 @@
         const outStatus = document.getElementById('outStatus');
         const captureTarget = document.getElementById('captureTarget');
 
+        let runtimeSpeciesId = null;
+
         function updateStatus() {
             const selectedOption = inpStatus.options[inpStatus.selectedIndex];
             outStatus.textContent = selectedOption.value;
             outStatus.style.backgroundColor = selectedOption.getAttribute('data-color');
         }
 
-        // FIX: Update background-position instead of object-position
         function updateImagePosition() {
             outImage.style.backgroundPosition = `${inpImageX.value}% ${inpImageY.value}%`;
         }
 
-        function resetToDefault() {
+        // --- AUTOMATED API DATA FETCHING ---
+        async function fetchSpeciesFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const speciesId = urlParams.get('id');
+            
+            if (!speciesId) {
+                // Fallback default setup if no URL ID parameter exists
+                resetToDefaultFields();
+                return;
+            }
+
+            runtimeSpeciesId = speciesId;
+
+            try {
+                const response = await fetch(`${BASE_API_URL}/api/species/${speciesId}`);
+                if (!response.ok) throw new Error("Species not found on network file map.");
+                
+                const data = await response.json();
+                
+                // Populate interactive input form fields
+                inpBengali.value = data.bengali_name || "";
+                inpEnglish.value = data.english_name || "";
+                inpScientific.value = data.scientific_name || "";
+                inpHabitat.value = data.habitat || "Bangladesh";
+                inpDescription.value = data.description || "";
+                inpSubcategory.value = data.subcategory || data.category || "";
+                inpCredit.value = data.image_credit || "FFDB Database Source";
+
+                // Set image path directly from your database record
+                if(data.image_url) {
+                    outImage.style.backgroundImage = `url('${data.image_url}')`;
+                } else {
+                    outImage.style.backgroundImage = `url('https://images.unsplash.com/photo-1595596700582-7a0e5b7fb582?q=80&w=1080&auto=format&fit=crop')`;
+                }
+
+                // Match and map the exact conservation status dropdown option
+                const matchedOption = Array.from(inpStatus.options).find(opt => opt.getAttribute('data-api') === data.conservation_status || opt.value.includes(data.conservation_status));
+                if (matchedOption) {
+                    inpStatus.value = matchedOption.value;
+                }
+
+                // Render matching canvas text fields live
+                outBengali.textContent = inpBengali.value;
+                outEnglish.textContent = inpEnglish.value;
+                outScientific.textContent = inpScientific.value;
+                outCredit.textContent = inpCredit.value;
+                
+                updateStatus();
+                updateImagePosition();
+
+            } catch (err) {
+                console.error("API Fetch Failure:", err);
+                alert("Could not load tracking information from database node. Reverting to default visual profile.");
+                resetToDefaultFields();
+            }
+        }
+
+        function resetToDefaultFields() {
             inpImage.value = "";
             inpImageX.value = "50";
             inpImageY.value = "50";
-
             inpCredit.value = "Forest Department";
             inpBengali.value = "বেঙ্গল টাইগার";
             inpEnglish.value = "Bengal Tiger";
             inpScientific.value = "Panthera tigris tigris";
+            inpHabitat.value = "Sundarbans Mangrove Forest";
+            inpSubcategory.value = "Mammals";
+            inpDescription.value = "The Bengal tiger is a panthera tigris tigris population native to the Indian subcontinent.";
             inpStatus.selectedIndex = 0;
 
             updateImagePosition();
-            
-            // FIX: Set placeholder image via background-image property
             outImage.style.backgroundImage = `url('https://images.unsplash.com/photo-1595596700582-7a0e5b7fb582?q=80&w=1080&auto=format&fit=crop')`;
-            
-            outCredit.textContent = "Forest Department";
-            outCredit.parentElement.style.display = "block";
-            outBengali.textContent = "বেঙ্গল টাইগার";
-            outEnglish.textContent = "Bengal Tiger";
-            outScientific.textContent = "Panthera tigris tigris";
-            
+            outCredit.textContent = inpCredit.value;
+            outBengali.textContent = inpBengali.value;
+            outEnglish.textContent = inpEnglish.value;
+            outScientific.textContent = inpScientific.value;
             updateStatus();
         }
 
-        window.addEventListener('load', resetToDefault);
+        // Run network execution map initialization hook safely
+        window.addEventListener('load', fetchSpeciesFromURL);
 
+        // Interactive User Customization Hooks
         inpImageX.addEventListener('input', updateImagePosition);
         inpImageY.addEventListener('input', updateImagePosition);
-
-        inpCredit.addEventListener('input', (e) => {
-            outCredit.textContent = e.target.value;
-            outCredit.parentElement.style.display = e.target.value.trim() === '' ? 'none' : 'block';
-        });
+        inpCredit.addEventListener('input', (e) => outCredit.textContent = e.target.value);
         inpBengali.addEventListener('input', (e) => outBengali.textContent = e.target.value);
         inpEnglish.addEventListener('input', (e) => outEnglish.textContent = e.target.value);
         inpScientific.addEventListener('input', (e) => outScientific.textContent = e.target.value);
-        
         inpStatus.addEventListener('change', updateStatus);
 
         inpImage.addEventListener('change', (e) => {
@@ -437,7 +527,6 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    // FIX: Apply uploaded image to background-image
                     outImage.style.backgroundImage = `url('${event.target.result}')`;
                     updateImagePosition();
                 }
@@ -445,6 +534,40 @@
             }
         });
 
+        // --- AUTOMATED POST TEMPLATE COPIER ---
+        btnCopyTemplate.addEventListener('click', () => {
+            const currentId = runtimeSpeciesId || "id_placeholder";
+            const categoryTag = inpSubcategory.value.trim().replace(/\s+/g, '');
+            
+            const postText = 
+`${inpBengali.value}
+
+English Name: ${inpEnglish.value}
+Scientific Name: ${inpScientific.value}
+Found in: ${inpHabitat.value}
+Conservation Status: ${inpStatus.value}
+
+${inpDescription.value}
+
+Explore the full profile and map on FFDB: ${BASE_API_URL}/species/${currentId}
+
+#BiodiversityBD #FloraAndFaunaBD #FFDB #NatureBangladesh #${categoryTag}`;
+
+            navigator.clipboard.writeText(postText).then(() => {
+                const originalBtnText = btnCopyTemplate.textContent;
+                btnCopyTemplate.textContent = "✅ Text Copied!";
+                btnCopyTemplate.style.backgroundColor = "#047857";
+                setTimeout(() => {
+                    btnCopyTemplate.textContent = originalBtnText;
+                    btnCopyTemplate.style.backgroundColor = "";
+                }, 2000);
+            }).catch(err => {
+                console.error("Clipboard operational block:", err);
+                alert("Failed to pass contents directly into clipboard. Please ensure browser permissions are mapped.");
+            });
+        });
+
+        // Export functionality via html2canvas canvas extraction engine
         btnExport.addEventListener('click', () => {
             const originalText = btnExport.textContent;
             btnExport.textContent = 'Generating...';
@@ -452,7 +575,7 @@
 
             setTimeout(() => {
                 html2canvas(captureTarget, {
-                    scale: 2, // Forces a 2160x2160 output
+                    scale: 2, 
                     width: 1080, 
                     height: 1080,
                     windowWidth: 1080, 
@@ -474,8 +597,8 @@
                     btnExport.textContent = originalText;
                     btnExport.disabled = false;
                 }).catch(err => {
-                    console.error("Error generating graphic:", err);
-                    alert("There was an error generating the image. Please try again.");
+                    console.error("Rendering block event tracked:", err);
+                    alert("There was an issue creating your asset file. Double check the network health map.");
                     btnExport.textContent = originalText;
                     btnExport.disabled = false;
                 });
