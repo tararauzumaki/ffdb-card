@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FFDB Social Graphics Generator & Automated Poster</title>
-    <!-- html2canvas library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -311,7 +309,6 @@
 </head>
 <body>
 
-    <!-- Controls Panel -->
     <div class="controls">
         <h2>FFDB Generator</h2>
         
@@ -376,13 +373,16 @@
         <div class="input-group">
             <label>Conservation Status</label>
             <select id="inpStatus">
-                <option value="Not Evaluated (NE)" data-color="#64748b" data-api="NE">Not Evaluated (NE)</option>
-                <option value="Data Deficient (DD)" data-color="#64748b" data-api="DD">Data Deficient (DD)</option>
-                <option value="Least Concern (LC)" data-color="#10b981" data-api="LC">Least Concern (LC)</option>
-                <option value="Near Threatened (NT)" data-color="#eab308" data-api="NT">Near Threatened (NT)</option>
-                <option value="Vulnerable (VU)" data-color="#f59e0b" data-api="VU">Vulnerable (VU)</option>
-                <option value="Endangered (EN)" data-color="#dc2626" data-api="EN">Endangered (EN)</option>
+                <option value="Extinct (EX)" data-color="#000000" data-api="EX">Extinct (EX)</option>
+                <option value="Extinct in the Wild (EW)" data-color="#4c1d95" data-api="EW">Extinct in the Wild (EW)</option>
+                <option value="Regionally Extinct (RE)" data-color="#9d174d" data-api="RE">Regionally Extinct (RE)</option>
                 <option value="Critically Endangered (CR)" data-color="#991b1b" data-api="CR">Critically Endangered (CR)</option>
+                <option value="Endangered (EN)" data-color="#dc2626" data-api="EN">Endangered (EN)</option>
+                <option value="Vulnerable (VU)" data-color="#f59e0b" data-api="VU">Vulnerable (VU)</option>
+                <option value="Near Threatened (NT)" data-color="#eab308" data-api="NT">Near Threatened (NT)</option>
+                <option value="Least Concern (LC)" data-color="#10b981" data-api="LC">Least Concern (LC)</option>
+                <option value="Data Deficient (DD)" data-color="#64748b" data-api="DD">Data Deficient (DD)</option>
+                <option value="Not Evaluated (NE)" data-color="#64748b" data-api="NE">Not Evaluated (NE)</option>
             </select>
         </div>
 
@@ -392,7 +392,6 @@
         </div>
     </div>
 
-    <!-- Preview Area -->
     <div class="preview-container">
         <div class="export-canvas" id="captureTarget">
             
@@ -473,13 +472,13 @@
                 
                 const responseJson = await response.json();
                 
-                // NEW: Ensure we extract the 'data' object from the API response
+                // Ensure we extract the 'data' object from the API response
                 if (!responseJson.success || !responseJson.data) {
                     throw new Error("Invalid JSON structure received from API.");
                 }
                 const data = responseJson.data;
                 
-                // NEW: Handle the image array properly to get the primary image
+                // Handle the image array properly to get the primary image
                 let primaryImageUrl = null;
                 let primaryImageCredit = "Forest Department";
                 
@@ -510,6 +509,9 @@
                 const matchedOption = Array.from(inpStatus.options).find(opt => opt.getAttribute('data-api') === data.conservation_status || opt.value.includes(data.conservation_status));
                 if (matchedOption) {
                     inpStatus.value = matchedOption.value;
+                } else {
+                    // Fallback to NE if api status doesn't strictly match
+                    inpStatus.value = "Not Evaluated (NE)";
                 }
 
                 // Refresh Canvas Layout elements
@@ -542,7 +544,7 @@
             inpHabitat.value = "Sundarbans Mangrove Forest";
             inpSubcategory.value = "Mammals";
             inpDescription.value = "The Bengal tiger is a panthera tigris tigris population native to the Indian subcontinent.";
-            inpStatus.selectedIndex = 0;
+            inpStatus.selectedIndex = 9; // Index 9 is "Not Evaluated (NE)"
 
             updateImagePosition();
             outImage.style.backgroundImage = `url('https://images.unsplash.com/photo-1595596700582-7a0e5b7fb582?q=80&w=1080&auto=format&fit=crop')`;
